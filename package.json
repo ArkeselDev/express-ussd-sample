@@ -1,0 +1,30 @@
+{
+  "name": "express-ussd-sample",
+  "version": "1.0.0",
+  "description": "Sample USSD app Code using Arkesel's USSD Platform",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArkeselDev/express-ussd-sample.git"
+  },
+  "keywords": [
+    "USSD",
+    "Arkesel",
+    "Sample",
+    "Code",
+    "Communications",
+    "Cloud"
+  ],
+  "author": "Komla Adzam",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ArkeselDev/express-ussd-sample/issues"
+  },
+  "homepage": "https://github.com/ArkeselDev/express-ussd-sample#readme",
+  "dependencies": {
+    "express": "^4.17.3"
+  }
+}
