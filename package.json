@@ -25,6 +25,9 @@
   },
   "homepage": "https://github.com/ArkeselDev/express-ussd-sample#readme",
   "dependencies": {
-    "express": "^4.17.3"
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.3",
+    "memory-cache": "^0.2.0"
   }
 }
