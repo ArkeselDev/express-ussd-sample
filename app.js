@@ -137,6 +137,7 @@ app.post('/ussd', ((req, res) => {
             // Useful Resources
             message = "For SMS which of the features do you like best?" +
                 "\n4. SMS To Contacts" +
+                "\n5. Enter your name" +
                 "\n\n*. Go Back";
 
             continueSession = true;
@@ -202,9 +203,50 @@ app.post('/ussd', ((req, res) => {
         } else if (["1", "2", "3", "4"].includes(userData)) {
             message = "Thank you for voting!";
             continueSession = false;
+        } else if (userData === "5"){
+            message = "Enter your name below: "
+            continueSession = true;
+
+            const currentState = {
+                sessionID,
+                userID,
+                level: 3,
+                msisdn,
+                message,
+                userData,
+                network,
+                newSession,
+                page: 1,
+            };
+
+            userResponseTracker.push({ ...currentState });
+            cache.put(sessionID, userResponseTracker);
         } else {
             message = "Bad choice!";
             continueSession = false;
+        }
+    } else if (lastResponse.level === 3) {
+        if (["Kwame", "Kofi", "Kwaku", "Komla", "Kwadwo"].includes(userData)) {
+            message = "Dear " + userData + ", thank you for voting!";
+            continueSession = false;
+        } else {
+            message = "You entered a wrong name. Please enter a valid name: "
+            continueSession = true;
+
+            const currentState = {
+                sessionID,
+                userID,
+                level: 3,
+                msisdn,
+                message,
+                userData,
+                network,
+                newSession,
+                page: 1,
+            };
+
+            userResponseTracker.push({ ...currentState });
+            cache.put(sessionID, userResponseTracker);
         }
     }
 
