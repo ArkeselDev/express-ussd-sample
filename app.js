@@ -2,6 +2,7 @@ var express = require('express');
 const cache = require('memory-cache');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const axios = require('axios');
 
 const app = express();
 
@@ -137,7 +138,7 @@ app.post('/ussd', ((req, res) => {
             // Useful Resources
             message = "For SMS which of the features do you like best?" +
                 "\n4. SMS To Contacts" +
-                "\n5. Enter your name" +
+                "\n5. Enter your amount to vote with" +
                 "\n\n*. Go Back";
 
             continueSession = true;
@@ -203,8 +204,8 @@ app.post('/ussd', ((req, res) => {
         } else if (["1", "2", "3", "4"].includes(userData)) {
             message = "Thank you for voting!";
             continueSession = false;
-        } else if (userData === "5"){
-            message = "Enter your name below: "
+        } else if (userData === "5") {
+            message = "Enter your amount to pay below: ";
             continueSession = true;
 
             const currentState = {
@@ -226,11 +227,51 @@ app.post('/ussd', ((req, res) => {
             continueSession = false;
         }
     } else if (lastResponse.level === 3) {
-        if (["Kwame", "Kofi", "Kwaku", "Komla", "Kwadwo"].includes(userData)) {
-            message = "Dear " + userData + ", thank you for voting!";
+        if (!isNaN(userData) && parseFloat(userData) > 0) {
+            const uniqueRef = `${Date.now() + (Math.random() * 100)}`;
+            const paymentRequest = {
+                account_number: msisdn,
+                merchant_reference: uniqueRef,
+                channel: "mobile-money",
+                provider: network.toLowerCase(),
+                transaction_type: "debit",
+                amount: userData,
+                purpose: "voting payment",
+                service_name: "arkesel voting",
+                currency: "GHS",
+            };
+            const apiKey = 'xxxxxxxxxxxxxxxxxxxxxxxx=';
+            const url = 'https://payment.arkesel.com/api/v1/payment/charge/initiate';
+
+            axios({
+                method: 'post',
+                url,
+                data: { ...paymentRequest },
+                headers: {
+                    'api-key': apiKey,
+                }
+            }).then(res => res.data).then(data => {
+                console.log({ data }, 'Initiate payment');
+                // Save into DB
+                // If it was successful then send message
+                message = `Kindly enter your pin for the approval of GHS ${userData} debiting of your Mobile money account. We are charging you for voting. Dial *170# to visit approvals if one doesn't pop up!`;
+                continueSession = false;
+            });
+
+            message = `Kindly enter your pin for the approval of GHS ${userData} debiting of your Mobile money account. We are charging you for voting. Dial *170# to visit approvals if one doesn't pop up!`;
             continueSession = false;
+
+            res.setHeader('Content-Type', 'application/json');
+            return res.status(200).json({
+                userID,
+                sessionID,
+                message,
+                continueSession,
+                msisdn
+            });
+
         } else {
-            message = "You entered a wrong name. Please enter a valid name: "
+            message = "You entered an invalid amount: ";
             continueSession = true;
 
             const currentState = {
@@ -257,6 +298,41 @@ app.post('/ussd', ((req, res) => {
         message,
         continueSession,
         msisdn
+    });
+}));
+
+// Callback URL for payment
+app.get('/payments/arkesel/callback', ((req, res) => {
+    console.log({ query: res.query }, 'Callback for Arkesel payment');
+    // Verify the payment...
+
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(200).json({
+        status: 'success',
+        message: 'arkesel payment callback called'
+    });
+}));
+
+// Verify payment
+app.get('/payments/verify', ((req, res) => {
+    const apiKey = 'XXXXXXXXXXXXXXXXXXXXXXX=';
+    const transRef = 'T634E3e8cac8175';
+    const url = `https://payment.arkesel.com/api/v1/verify/transaction/${transRef}`;
+
+    axios({
+        method: 'get',
+        url,
+        headers: {
+            'api-key': apiKey,
+        }
+    }).then(res => res.data).then(data => {
+        console.log({ data }, 'Verify payment');
+        // Update payment status in DB
+    });
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(200).json({
+        status: 'success',
+        message: 'payment verification called'
     });
 }));
 
